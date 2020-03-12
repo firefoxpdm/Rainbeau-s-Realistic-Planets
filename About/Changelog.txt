@@ -1,6 +1,8 @@
 ---------------------------------------------------------------------------------
   Changelog for "Rainbeau's Realistic Planets"
 ---------------------------------------------------------------------------------
+- 2020-03-12
+    - Updated to 1.1
 
 - 12/05/2018
 	- Revised acacia tree stats to match those of acacia trees in "Vegetable

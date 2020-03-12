@@ -1,4 +1,4 @@
-﻿using Harmony;
+﻿using HarmonyLib;
 using RimWorld;
 using RimWorld.Planet;
 using System;
@@ -134,7 +134,7 @@ namespace Planets_Code {
 		public override string SettingsCategory() { return "Planets.ModName".Translate(); }
 		public override void DoSettingsWindowContents(Rect canvas) { Settings.DoWindowContents(canvas); }
 		public Controller(ModContentPack content) : base(content) {
-			HarmonyInstance harmony = HarmonyInstance.Create("net.rainbeau.rimworld.mod.realisticplanets");
+			Harmony harmony = new Harmony("net.rainbeau.rimworld.mod.realisticplanets");
 			harmony.PatchAll( Assembly.GetExecutingAssembly() );
 			Settings = GetSettings<Settings>();
 		}
@@ -1014,6 +1014,7 @@ namespace Planets_Code {
 		private RainfallModifier rainfallMod;
 		private OverallRainfall rainfall;
 		private OverallTemperature temperature;
+        private OverallPopulation population;
 		private readonly static float[] PlanetCoverages;
 		private readonly static string[] WorldPresets;
 		public override string PageTitle {
@@ -1098,7 +1099,7 @@ namespace Planets_Code {
 			}
 			LongEventHandler.QueueLongEvent(() => {
 				Find.GameInitData.ResetWorldRelatedMapInitData();
-				Current.Game.World = WorldGenerator.GenerateWorld(this.planetCoverage, this.seedString, this.rainfall, this.temperature);
+				Current.Game.World = WorldGenerator.GenerateWorld(this.planetCoverage, this.seedString, this.rainfall, this.temperature, this.population);
 				LongEventHandler.ExecuteWhenFinished(() => {
 					if (this.next != null) {
 						Find.WindowStack.Add(this.next);
@@ -1184,48 +1185,56 @@ namespace Planets_Code {
 								Planets_GameComponent.axialTilt = AxialTilt.Normal;
 								this.rainfallMod = RainfallModifier.Normal;
 								this.temperature = OverallTemperature.Normal;
+                                this.population = OverallPopulation.Normal;
 							}
 							else if (this.worldPreset == "Planets.Desert") {
 								Planets_GameComponent.worldType = WorldType.Dry;
 								Planets_GameComponent.axialTilt = AxialTilt.Normal;
 								this.rainfallMod = RainfallModifier.LittleBitLess;
 								this.temperature = OverallTemperature.LittleBitWarmer;
+                                this.population = OverallPopulation.Little;
 							}
 							else if (this.worldPreset == "Planets.Frozen") {
 								Planets_GameComponent.worldType = WorldType.VeryDry;
 								Planets_GameComponent.axialTilt = AxialTilt.Normal;
 								this.rainfallMod = RainfallModifier.LittleBitLess;
 								this.temperature = OverallTemperature.Cold;
+                                this.population = OverallPopulation.Little;
 							}
 							else if (this.worldPreset == "Planets.Earthlike") {
 								Planets_GameComponent.worldType = WorldType.Earthlike;
 								Planets_GameComponent.axialTilt = AxialTilt.Normal;
 								this.rainfallMod = RainfallModifier.Normal;
 								this.temperature = OverallTemperature.Normal;
+                                this.population = OverallPopulation.Normal;
 							}
 							else if (this.worldPreset == "Planets.Forest") {
 								Planets_GameComponent.worldType = WorldType.Vanilla;
 								Planets_GameComponent.axialTilt = AxialTilt.Normal;
 								this.rainfallMod = RainfallModifier.LittleBitMore;
 								this.temperature = OverallTemperature.LittleBitColder;
+                                this.population = OverallPopulation.LittleBitLess;
 							}
 							else if (this.worldPreset == "Planets.Iceball") {
 								Planets_GameComponent.worldType = WorldType.Vanilla;
 								Planets_GameComponent.axialTilt = AxialTilt.Normal;
 								this.rainfallMod = RainfallModifier.Normal;
 								this.temperature = OverallTemperature.VeryCold;
+                                this.population = OverallPopulation.AlmostNone;
 							}
 							else if (this.worldPreset == "Planets.Jungle") {
 								Planets_GameComponent.worldType = WorldType.Earthlike;
 								Planets_GameComponent.axialTilt = AxialTilt.Normal;
 								this.rainfallMod = RainfallModifier.LittleBitMore;
 								this.temperature = OverallTemperature.LittleBitWarmer;
+                                this.population = OverallPopulation.Little;
 							}
 							else if (this.worldPreset == "Planets.Ocean") {
 								Planets_GameComponent.worldType = WorldType.Waterworld;
 								Planets_GameComponent.axialTilt = AxialTilt.Normal;
 								this.rainfallMod = RainfallModifier.Normal;
 								this.temperature = OverallTemperature.Normal;
+                                this.population = OverallPopulation.AlmostNone;
 							}
 							else { }
 						}
@@ -1255,19 +1264,30 @@ namespace Planets_Code {
 			this.rainfallMod = (RainfallModifier)Mathf.RoundToInt(Widgets.HorizontalSlider(rect4, (float)this.rainfallMod, 0f, (float)(RainfallModifierUtility.EnumValuesCount - 1), true, "PlanetRainfall_Normal".Translate(), "PlanetRainfall_Low".Translate(), "PlanetRainfall_High".Translate(), 1f));
 			if (this.rainfallMod != rainfallModCheck) { this.worldPreset = "Planets.Custom"; }
 			TooltipHandler.TipRegion(new Rect(0f, single, rect4.xMax, rect4.height), "Planets.RainfallTip".Translate());
-			//
-			// TEMPERATURE SLIDER
-			//
-			single += 40f;
-			Widgets.Label(new Rect(0f, single, 200f, 30f), "PlanetTemperature".Translate());
-			Rect rect5 = new Rect(200f, single, 200f, 30f);
-			OverallTemperature temperatureCheck = this.temperature;
-			this.temperature = (OverallTemperature)Mathf.RoundToInt(Widgets.HorizontalSlider(rect5, (float)this.temperature, 0f, (float)(OverallTemperatureUtility.EnumValuesCount - 1), true, "PlanetTemperature_Normal".Translate(), "PlanetTemperature_Low".Translate(), "PlanetTemperature_High".Translate(), 1f));
-			if (this.temperature != temperatureCheck) { this.worldPreset = "Planets.Custom"; }
-			//
-			// AXIAL TILT
-			//
-			single += 40f;
+            //
+            // TEMPERATURE SLIDER
+            //
+            single += 40f;
+            Widgets.Label(new Rect(0f, single, 200f, 30f), "PlanetTemperature".Translate());
+            Rect rect5 = new Rect(200f, single, 200f, 30f);
+            OverallTemperature temperatureCheck = this.temperature;
+            this.temperature = (OverallTemperature)Mathf.RoundToInt(Widgets.HorizontalSlider(rect5, (float)this.temperature, 0f, (float)(OverallTemperatureUtility.EnumValuesCount - 1), true, "PlanetTemperature_Normal".Translate(), "PlanetTemperature_Low".Translate(), "PlanetTemperature_High".Translate(), 1f));
+            if (this.temperature != temperatureCheck) { this.worldPreset = "Planets.Custom"; }
+
+            //
+            // POPULATION SLIDER
+            //
+            single += 40f;
+            Widgets.Label(new Rect(0f, single, 200f, 30f), "PlanetPopulation".Translate());
+            Rect rect55 = new Rect(200f, single, 200f, 30f);
+            OverallPopulation populationCheck = this.population;
+            this.population = (OverallPopulation)Mathf.RoundToInt(Widgets.HorizontalSlider(rect55, (float)this.population, 0f, (float)(OverallPopulationUtility.EnumValuesCount - 1), true, "PlanetPopulation_Normal".Translate(), "PlanetPopulation_Low".Translate(), "PlanetPopulation_High".Translate(), 1f));
+            if (this.population != populationCheck) { this.worldPreset = "Planets.Custom"; }
+
+            //
+            // AXIAL TILT
+            //
+            single += 40f;
 			Widgets.Label(new Rect(0f, single, 200f, 30f), "Planets.AxialTilt".Translate());
 			Rect rect9 = new Rect(200f, single, 200f, 30f);
 			AxialTilt axialTiltCheck = Planets_GameComponent.axialTilt;
@@ -1300,6 +1320,7 @@ namespace Planets_Code {
 			Planets_GameComponent.subcount = 10;
 			this.rainfallMod = RainfallModifier.Normal;
 			this.temperature = OverallTemperature.Normal;
+            this.population = OverallPopulation.Normal;
 		}
 		public void Randomize() {
 			this.seedString = GenText.RandomSeedString();
@@ -1331,7 +1352,15 @@ namespace Planets_Code {
 			else if (randTemp > 0.28) { this.temperature = OverallTemperature.LittleBitWarmer; }
 			else if (randTemp > 0.14) { this.temperature = OverallTemperature.Hot; }
 			else { this.temperature = OverallTemperature.VeryHot; }
-			Controller.Settings.randomPlanet = true;
+            float randPop = Rand.Value;
+            if (randPop > 0.86) { this.population = OverallPopulation.AlmostNone; }
+            else if (randPop > 0.72) { this.population = OverallPopulation.Little; }
+            else if (randPop > 0.58) { this.population = OverallPopulation.LittleBitLess; }
+            else if (randPop > 0.42) { this.population = OverallPopulation.Normal; }
+            else if (randPop > 0.28) { this.population = OverallPopulation.LittleBitMore; }
+            else if (randPop > 0.14) { this.population = OverallPopulation.High; }
+            else { this.population = OverallPopulation.VeryHigh; }
+            Controller.Settings.randomPlanet = true;
 			if (this.CanDoNext()) {
 				this.DoNext();
 			}
