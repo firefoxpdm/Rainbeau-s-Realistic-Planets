@@ -995,7 +995,7 @@ namespace Planets_Code {
 				else {
 					Page page1 = page.next;
 					Page page2 = page.prev;
-					Planets_CreateWorldParams createWorldParam = new Planets_CreateWorldParams();
+                    Page_CreateWorldParams createWorldParam = new Page_CreateWorldParams();
 					page2.next = createWorldParam;
 					page1.prev = createWorldParam;
 					createWorldParam.prev = page2;
@@ -1006,7 +1006,7 @@ namespace Planets_Code {
 		}
 	}	
 
-	public class Planets_CreateWorldParams : Page {
+	public class Page_CreateWorldParams : Page {
 		private bool initialized;
 		private string seedString;
 		private float planetCoverage;
@@ -1020,12 +1020,12 @@ namespace Planets_Code {
 		public override string PageTitle {
 			get { return "CreateWorld".Translate(); }
 		}
-		static Planets_CreateWorldParams() {
-			Planets_CreateWorldParams.PlanetCoverages = new float[] { 
+		static Page_CreateWorldParams() {
+            Page_CreateWorldParams.PlanetCoverages = new float[] { 
 				0.05f, 0.1f, 0.15f, 0.2f, 0.25f, 0.3f, 0.35f, 0.4f, 0.45f, 0.5f, 
 				0.55f, 0.6f, 0.65f, 0.7f, 0.75f, 0.8f, 0.85f, 0.9f, 0.95f, 1f
 			};
-			Planets_CreateWorldParams.WorldPresets = new string[] { 
+            Page_CreateWorldParams.WorldPresets = new string[] { 
 				"Planets.Vanilla", 
 				"Planets.Desert",
 				"Planets.Frozen",
@@ -1037,7 +1037,7 @@ namespace Planets_Code {
 				"Planets.Custom"
 			};
 		}
-		public Planets_CreateWorldParams() { }
+		public Page_CreateWorldParams() { }
 		protected override bool CanDoNext() {
 			if (!base.CanDoNext()) {
 				return false;
@@ -1145,7 +1145,7 @@ namespace Planets_Code {
 			Rect rect3 = new Rect(200f, single, 200f, 30f);
 			if (Widgets.ButtonText(rect3, this.planetCoverage.ToStringPercent(), true, false, true)) {
 				List<FloatMenuOption> floatMenuOptions = new List<FloatMenuOption>();
-				float[] singleArray = Planets_CreateWorldParams.PlanetCoverages;
+				float[] singleArray = Page_CreateWorldParams.PlanetCoverages;
 				for (int i = 0; i < (int)singleArray.Length; i++) {
 					float single1 = singleArray[i];
 					string stringPercent = single1.ToStringPercent();
@@ -1173,7 +1173,7 @@ namespace Planets_Code {
 			Rect rect8 = new Rect(200f, single, 200f, 30f);
 			if (Widgets.ButtonText(rect8, this.worldPreset.Translate(), true, false, true)) {
 				List<FloatMenuOption> floatMenuOptions = new List<FloatMenuOption>();
-				string[] singleArray = Planets_CreateWorldParams.WorldPresets;
+				string[] singleArray = Page_CreateWorldParams.WorldPresets;
 				for (int i = 0; i < (int)singleArray.Length; i++) {
 					string single1 = singleArray[i];
 					string single1Translated = single1.Translate();
